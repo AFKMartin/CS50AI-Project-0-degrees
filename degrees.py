@@ -85,16 +85,64 @@ def main():
 
 
 def shortest_path(source, target):
-    """
-    Returns the shortest list of (movie_id, person_id) pairs
-    that connect the source to the target.
+    # Step 1: Initialization of the starting point
+    # Create the first node representing the source person
+    start = Node(state=source, parent=None, action=None)
+    
+    # Frontier: This is the checklist of the nodes we will explore
+    frontier = QueueFrontier() # FIFO
+    frontier.add(start) # Add the start point to the frontier
 
-    If no possible path, returns None.
-    """
+    # Explored set: Keeps tracks of what have been explored alredy
+    explored = set()
+    frontier_states = {source}
 
-    # TODO
-    raise NotImplementedError
+    # Step 2: Main search loop.
+    while not frontier.empty():    
+        
+        # First remove the next node from the frontier to explore
+        node = frontier.remove()
+        frontier_states.remove(node.state)
 
+        # Then check if we reached our goal
+        if node.state == target:
+
+            # If we did... 
+            path = [] # This will hold our final path as a list of (movie_id, person_id) tuples
+            while node.parent is not None:
+                # Node.action contains the (movie_id, person_id) that got us here, we add this step to our path
+                path.append(node.action)
+                # Move to the parent node
+                node = node.parent
+            # We built the path BUT Backwards (target -> Source)
+            path.reverse() # Now source -> target
+            return path # And just return it
+        
+        # Step 3: Mark this person as explored
+        explored.add(node.state)
+        
+        # Step 4: Explore all the neighbors
+        for movie_id, person_id in neighbors_for_person(node.state):
+
+            # Only add if not alredy explored and they are not alredy in the frontier
+            if person_id not in explored and person_id not in frontier_states:
+                
+                # Create a new node for this neighbor
+                # - state: where we'd be
+                # - parent: where we came from
+                # - action: the movie_id and person_id pair that connects them
+                child = Node(
+                    state=person_id,
+                    parent=node,
+                    action=(movie_id, person_id)
+                )
+                
+                # Add it to the frontier
+                frontier.add(child)
+                frontier_states.add(person_id)
+
+    # Step 5: After exiting the loop with nothing, we've explored all reachable people and didn't find the target
+    return None
 
 def person_id_for_name(name):
     """
